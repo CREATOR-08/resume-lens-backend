@@ -5,6 +5,8 @@ from app.document_reader import read_document
 from app.gemini_service import analyze as analyze_gemini
 
 from fastapi.middleware.cors import CORSMiddleware
+import os
+origin= os.getenv("ALLOWED_ORIGINS")
 app = FastAPI(
     title="Resume Analyzer API"
 )
@@ -12,7 +14,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
+        origin
     ],
     allow_credentials=True,
     allow_methods=["*"],
