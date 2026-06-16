@@ -1,8 +1,9 @@
 from fastapi import FastAPI, UploadFile, File
-
+from app.routes.premium import router as premium_router
 from app.document_reader import read_document
 
-from app.gemini_service import analyze as analyze_gemini
+from app.gemini_service import call_gemini as analyze_gemini
+from app.premium_analyze import premium_analyze_file
 
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -29,10 +30,13 @@ def home():
 @app.post("/analyse")
 async def analyse(
     resume: UploadFile = File(...),
-    jd: UploadFile = File(...)
-):
+    jd: str | UploadFile = File(...)
+    ):
     resume_text = await  read_document(resume)
-    jd_text = await  read_document(jd)
+    if(isinstance(jd, str)):
+        jd_text= jd
+    else:
+        jd_text = await  read_document(jd)
 
     report= analyze_gemini(resume_text, jd_text)
 
@@ -40,3 +44,18 @@ async def analyse(
         "status": "success",
         "report": report
 }
+
+
+@app.post("/analyse/premium")
+async def premium_analyse(
+    resume: UploadFile = File(...),
+
+):
+    report = await premium_analyze_file(resume)
+
+    return {
+        "status": "success",
+        "report": report
+    }
+
+app.include_router(premium_router)
