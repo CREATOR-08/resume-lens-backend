@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 from app.routes.premium import router as premium_router
 from app.document_reader import read_document
 
-from app.gemini_service import call_gemini as analyze_gemini
+from app.gemini_service import analyze as analyze_gemini
 from app.premium_analyze import premium_analyze_file
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,7 +30,7 @@ def home():
 @app.post("/analyse")
 async def analyse(
     resume: UploadFile = File(...),
-    jd: str | UploadFile = File(...)
+    jd: UploadFile = File(...)
     ):
     resume_text = await  read_document(resume)
     if(isinstance(jd, str)):
