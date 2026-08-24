@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from app.routes.premium import router as premium_router
 from app.document_reader import read_document
 
@@ -30,15 +30,37 @@ def home():
 @app.post("/analyse")
 async def analyse(
     resume: UploadFile = File(...),
-    jd: UploadFile = File(...)
+    jd: UploadFile | None = File(None),
+    jd_text: str | None = Form(None),
+    job_description: str | None = Form(None),
+    jobDescription: str | None = Form(None),
+    role: str | None = Form(None),
     ):
     resume_text = await  read_document(resume)
-    if(isinstance(jd, str)):
-        jd_text= jd
+    pasted_jd = next(
+        (
+            value for value in (jd_text, job_description, jobDescription, role)
+            if value is not None and value.strip()
+        ),
+        None,
+    )
+    if pasted_jd is not None:
+        jd_content = pasted_jd.strip()
+    elif jd is not None:
+        jd_content = await read_document(jd)
     else:
-        jd_text = await  read_document(jd)
+        raise HTTPException(
+            status_code=400,
+            detail="Provide either a JD file or pasted JD text."
+        )
 
-    report= analyze_gemini(resume_text, jd_text)
+    if not jd_content.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="The job description cannot be empty."
+        )
+
+    report= analyze_gemini(resume_text, jd_content)
 
     return {
         "status": "success",
